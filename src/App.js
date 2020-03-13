@@ -66,6 +66,24 @@ function App() {
     }
   };
   
+  const handleDelete = async (e, id) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true)
+      setErrors([]);
+      await axios.delete(`${backend_url}/users/${id}`);
+      const newUsers = users.filter(user => user._id !== id)
+      setUsers(newUsers);
+      setIsLoading(false)
+      
+    } catch (error) {
+      setIsLoading(false)
+      if(error.response.data && error.response.data.errors){
+        setErrors(error.response.data.errors);
+      }
+    }
+  }
+  
 	return (
 		<div className="App pt-5">
 			<Container>
@@ -181,7 +199,7 @@ function App() {
                             </Button>
                           </td>
                           <td style={{width: '2rem'}}>
-                            <Button variant="danger" size="sm">
+                            <Button variant="danger" size="sm" onClick={(e) => handleDelete(e, user._id)}>
                               X
                             </Button>
                           </td>
