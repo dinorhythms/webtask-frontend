@@ -13,6 +13,7 @@ function App() {
   const [address, setAddress] = useState("");
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState([]);
 
   useEffect(() => {
     const getRecords = async () => {
@@ -23,12 +24,13 @@ function App() {
         setIsLoading(false)
       } catch (error) {
         console.log(error.message);
+        setIsLoading(false)
       }
     }
     getRecords();
   }, [])
   
-	const handleSubmit = e => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
 
 		const userData = {
@@ -37,7 +39,31 @@ function App() {
 			age,
 			phoneNo,
 			address
-		};
+    };
+    
+    try {
+      setIsLoading(true)
+      setErrors([]);
+      const newData = await axios.post(`${backend_url}/users/create`, userData);
+      const user = newData.data.data
+      
+      setUsers([...users, {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        age: user.age,
+        phoneNo: user.phoneNo,
+        address: user.address
+      }]) 
+      setIsLoading(false)
+      document.getElementById("userform").reset();
+    } catch (error) {
+      setIsLoading(false)
+      
+      if(error.response.data && error.response.data.errors){
+        setErrors(error.response.data.errors);
+      }
+    }
   };
   
 	return (
@@ -53,7 +79,7 @@ function App() {
 				<Container>
 					<Row>
 						<Col>
-							<Form onSubmit={handleSubmit}>
+							<Form onSubmit={handleSubmit} id="userform">
 								<Form.Row className="mb-3">
 									<Col>
 										<Form.Control
@@ -100,8 +126,17 @@ function App() {
 										/>
 									</Col>
 								</Form.Row>
-								<Button variant="primary" type="submit" block>
-									Add User
+                <div>
+                  {errors?(
+                    <>
+                      {errors.map((error, index) => (
+                        <p key={index} className="text-danger text-center">{error[Object.keys(error)]}</p>
+                      ))}
+                    </>
+                  ):null}
+                </div>
+								<Button variant="primary" type="submit" block disabled={isLoading}>
+									{isLoading?"...Loading": "Add User"}
 								</Button>
 							</Form>
 						</Col>
